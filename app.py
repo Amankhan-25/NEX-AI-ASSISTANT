@@ -26,70 +26,85 @@ client = Groq(api_key=api_key)
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
+# Dropdown visibility state
+if "show_upload" not in st.session_state:
+    st.session_state.show_upload = False
+
 # ==========================================
-# SIDEBAR FEATURES (Clear Chat & Advanced File Upload)
+# SIDEBAR FEATURES (Cleaned Up)
 # ==========================================
 st.sidebar.title("⚙️ NEX AI Options")
 
 # Clear Chat Button
 if st.sidebar.button("🧹 Clear Chat History", type="primary"):
     st.session_state.messages = []
+    st.session_state.show_upload = False
     st.rerun()
 
-st.sidebar.markdown("---")
-
-# Upgraded File Uploader (Text, PDFs, Word, Photos)
-uploaded_file = st.sidebar.file_uploader(
-    "📄 Upload Files or Photos", 
-    type=["txt", "py", "md", "pdf", "docx", "jpg", "jpeg", "png"]
-)
-file_context = ""
-
-if uploaded_file is not None:
-    file_details = {"FileName": uploaded_file.name, "FileType": uploaded_file.type}
-    
-    # Check if it's an image
-    if "image" in uploaded_file.type:
-        st.sidebar.image(uploaded_file, caption="Uploaded Photo", use_container_width=True)
-        file_context = f"[User uploaded a photo named '{uploaded_file.name}']"
-        st.sidebar.warning("Note: Images are recognized, text analysis coming soon!")
-    else:
-        try:
-            # Handle PDF
-            if uploaded_file.name.endswith('.pdf'):
-                pdf_reader = pypdf.PdfReader(uploaded_file)
-                for page in pdf_reader.pages:
-                    file_context += page.extract_text()
-            # Handle Text Files
-            else:
-                file_context = uploaded_file.read().decode("utf-8")
-            st.sidebar.success(f"📄 {uploaded_file.name} loaded successfully!")
-        except Exception as e:
-            st.sidebar.error(f"Error reading file: {e}")
-
 # ==========================================
-# MAIN CHAT LOGIC WITH VOICE INPUT
+# MAIN CHAT HISTORY SCREEN
 # ==========================================
-
-# Purani chats ko screen par dikhana
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# --- GEMINI STYLE VOICE INPUT CONTAINER ---
-st.markdown("### 🎙️ Speak to NEX AI")
-# Ye button aapki aawaz ko sunega aur direct text me convert kar dega
-voice_text = speech_to_text(start_prompt="🔴 Tap to Speak", stop_prompt="⏹️ Stop Recording", language='en', key='groq_mic')
+# ==========================================
+# CONTROLS DROPDOWN & INPUT PANEL
+# ==========================================
 
-# Text Chat Input
+# 1. Hidden File Uploader Container (Plus Icon dabane par input bar ke theek upar dikhega)
+file_context = ""
+if st.session_state.show_upload:
+    with st.container(border=True):
+        uploaded_file = st.file_uploader(
+            "Upload text, docs, PDFs, or photos", 
+            type=["txt", "py", "md", "pdf", "docx", "jpg", "jpeg", "png"],
+            label_visibility="collapsed"
+        )
+        if uploaded_file is not None:
+            if "image" in uploaded_file.type:
+                st.image(uploaded_file, caption="Attached Photo", width=150)
+                file_context = f"[User uploaded a photo named '{uploaded_file.name}']"
+            else:
+                try:
+                    if uploaded_file.name.endswith('.pdf'):
+                        pdf_reader = pypdf.PdfReader(uploaded_file)
+                        for page in pdf_reader.pages:
+                            file_context += page.extract_text()
+                    else:
+                        file_context = uploaded_file.read().decode("utf-8")
+                    st.success(f"📄 {uploaded_file.name} attached!")
+                except Exception as e:
+                    st.error(f"Error: {e}")
+
+# 2. Input Bar ke theek upar Inline Row Controls
+ctrl_col1, ctrl_col2, ctrl_col3 = st.columns([1, 8, 1])
+
+with ctrl_col1:
+    # Left end par ➕ button
+    if st.button("➕", help="Upload Files/Photos", key="plus_toggle_btn"):
+        st.session_state.show_upload = not st.session_state.show_upload
+        st.rerun()
+
+with ctrl_col3:
+    # Right end par minimalist 🎙️ button
+    voice_text = speech_to_text(
+        start_prompt="🎙️", 
+        stop_prompt="⏹️", 
+        language='en', 
+        key='groq_mic_fixed'
+    )
+
+# 3. Official Text Chat Input Bar (As per new.png)
 user_input = st.chat_input("Ask me anything...")
 
-# Dono me se jo bhi input aaye, use final prompt banana
+# ==========================================
+# CHAT EXECUTION LOGIC
+# ==========================================
 final_prompt = user_input if user_input else voice_text
 
 if final_prompt:
-    # Agar document upload hua hai toh uska content sath me jodna
-    if file_context and user_input:
+    if file_context:
         full_prompt = f"Context from file:\n{file_context}\n\nUser Question: {final_prompt}"
     else:
         full_prompt = final_prompt
@@ -98,7 +113,6 @@ if final_prompt:
     with st.chat_message("user"):
         st.markdown(final_prompt)
 
-    # AI ka response generate karna
     with st.chat_message("assistant"):
         message_placeholder = st.empty()
         full_response = ""
@@ -128,4 +142,6 @@ if final_prompt:
             
     st.session_state.messages.append({"role": "assistant", "content": full_response})
     
-b
+    # Reset state after message send
+    st.session_state.show_upload = False
+    st.rerun()
