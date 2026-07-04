@@ -31,7 +31,7 @@ if "show_upload" not in st.session_state:
     st.session_state.show_upload = False
 
 # ==========================================
-# SIDEBAR FEATURES (Cleaned Up - Only Clear Chat)
+# SIDEBAR FEATURES
 # ==========================================
 st.sidebar.title("⚙️ NEX AI Options")
 
@@ -44,33 +44,22 @@ if st.sidebar.button("🧹 Clear Chat History", type="primary"):
 # ==========================================
 # MAIN CHAT HISTORY SCREEN
 # ==========================================
-# Purani chats ko screen par dikhana
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
 # ==========================================
-# MODERN ROW CONTROL (Plus Icon & Voice Mic)
+# GEMINI STYLE FILE UPLOAD CONTROL
 # ==========================================
-st.markdown("---")
-
-# Spacing setup: Left side button, space, Right side Mic button
-ctrl_col1, ctrl_col2, ctrl_col3 = st.columns([1, 8, 1])
-
-with ctrl_col1:
-    # Toggle pop-up menu for file upload
-    if st.button("➕", help="Upload Files/Photos", key="plus_toggle"):
-        st.session_state.show_upload = not st.session_state.show_upload
-        st.rerun()
-
 file_context = ""
-# Gemini jaisa hidden file upload panel jo + dabane par hi khulega
+
+# Plus button dabaane par khulne wala container
 if st.session_state.show_upload:
     with st.container(border=True):
         uploaded_file = st.file_uploader(
             "Upload text, docs, PDFs, or photos", 
             type=["txt", "py", "md", "pdf", "docx", "jpg", "jpeg", "png"],
-            label_visibility="visible"
+            label_visibility="collapsed"
         )
         if uploaded_file is not None:
             if "image" in uploaded_file.type:
@@ -88,8 +77,20 @@ if st.session_state.show_upload:
                 except Exception as e:
                     st.error(f"Error: {e}")
 
+# ==========================================
+# MODERNISED HORIZONTAL CONTROL BAR
+# ==========================================
+# Spacing layout: [Plus Button] [Gap/Space] [Mic Button]
+ctrl_col1, ctrl_col2, ctrl_col3 = st.columns([1, 10, 1])
+
+with ctrl_col1:
+    # ➕ button bina page ko bar-bar refresh kiye state toggle karega
+    if st.button("➕", help="Upload Files/Photos", key="plus_toggle"):
+        st.session_state.show_upload = not st.session_state.show_upload
+        st.rerun()
+
 with ctrl_col3:
-    # Voice Input - Bada button aur branding hatakar sirf mic rakha hai
+    # Minimalist Voice Mic - Bina kisi bade logo ya text ke
     voice_text = speech_to_text(
         start_prompt="🎙️", 
         stop_prompt="⏹️", 
@@ -98,16 +99,19 @@ with ctrl_col3:
     )
 
 # ==========================================
-# CHAT INPUT & EXECUTION
+# CHAT INPUT & PROCESSOR
 # ==========================================
-# Pure input box jaisa tumne new.png me manga tha
+# `new.png` jaisa sleek text chat input bar
 user_input = st.chat_input("Ask me anything...")
 
-# Dono me se jo bhi input pehle aaye
-final_prompt = user_input if user_input else voice_text
+# Check inputs
+final_prompt = None
+if user_input:
+    final_prompt = user_input
+elif voice_text:
+    final_prompt = voice_text
 
 if final_prompt:
-    # Context merge logic
     if file_context:
         full_prompt = f"Context from file:\n{file_context}\n\nUser Question: {final_prompt}"
     else:
@@ -147,6 +151,6 @@ if final_prompt:
             
     st.session_state.messages.append({"role": "assistant", "content": full_response})
     
-    # Message send hone ke baad file pop-up ko band kar dena
+    # Message submit hote hi uploader hide kar do aur state reset karo
     st.session_state.show_upload = False
     st.rerun()
