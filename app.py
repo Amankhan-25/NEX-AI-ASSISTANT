@@ -3,48 +3,8 @@ from groq import Groq
 from streamlit_mic_recorder import speech_to_text
 import pypdf
 
-# Page layout aur title setup
+# Page layout aur title setup (Sabse pehle hona chahiye)
 st.set_page_config(page_title="NEX AI Assistant", page_icon="🤖", layout="centered")
-
-# ==========================================
-# CUSTOM CSS FOR PERFECT INLINE LAYOUT (Web + Mobile)
-# ==========================================
-st.markdown("""
-    <style>
-    /* Bada title aur caption ka gap kam karne ke liye */
-    .block-container {
-        padding-bottom: 7rem;
-    }
-    
-    /* Input row ko ek line me lane ke liye container */
-    .custom-input-container {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        background-color: #262730;
-        padding: 8px 12px;
-        border-radius: 10px;
-        border: 1px solid #4A4B57;
-        width: 100%;
-    }
-    
-    /* Streamlit columns alignment fix */
-    div[data-testid="column"] {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 0px !important;
-    }
-    
-    /* Input box style reset */
-    .stTextInput input {
-        background-color: transparent !important;
-        border: none !important;
-        color: white !important;
-        padding: 0px !important;
-    }
-    </style>
-""", unsafe_allowed_html=True)
 
 st.title("🤖 NEX AI Assistant")
 st.caption("Made by Mr.Amankhan | Available 24/7 Live")
@@ -116,9 +76,9 @@ if st.session_state.show_upload:
 st.markdown("---")
 
 # ==========================================
-# 100% INLINE CHAT BAR (As per new.png)
+# 100% INLINE CHAT BAR (Safe Layout)
 # ==========================================
-# Yahan humne exact grid column setup kiya hai jo mobile pe bhi stack nahi hoga
+# Columns bina kisi custom CSS ke elements ko ek line me horizontally align rakhenge
 ctrl_col1, ctrl_col2, ctrl_col3, ctrl_col4 = st.columns([1, 8, 1, 1])
 
 with ctrl_col1:
@@ -128,11 +88,11 @@ with ctrl_col1:
         st.rerun()
 
 with ctrl_col2:
-    # Center: Text Input Box (Border hidden via CSS to blend perfectly)
+    # Center: Text Input Box
     user_text_input = st.text_input("Ask me anything...", placeholder="Ask me anything...", label_visibility="collapsed", key="text_chat_input")
 
 with ctrl_col3:
-    # Right Side: Voice Mic (Directly inside the row)
+    # Right Side: Voice Mic
     voice_text = speech_to_text(
         start_prompt="🎙️", 
         stop_prompt="⏹️", 
@@ -194,3 +154,4 @@ if final_prompt:
     
     st.session_state.show_upload = False
     st.rerun()
+    
