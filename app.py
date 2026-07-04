@@ -6,6 +6,46 @@ import pypdf
 # Page layout aur title setup
 st.set_page_config(page_title="NEX AI Assistant", page_icon="🤖", layout="centered")
 
+# ==========================================
+# CUSTOM CSS FOR PERFECT INLINE LAYOUT (Web + Mobile)
+# ==========================================
+st.markdown("""
+    <style>
+    /* Bada title aur caption ka gap kam karne ke liye */
+    .block-container {
+        padding-bottom: 7rem;
+    }
+    
+    /* Input row ko ek line me lane ke liye container */
+    .custom-input-container {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background-color: #262730;
+        padding: 8px 12px;
+        border-radius: 10px;
+        border: 1px solid #4A4B57;
+        width: 100%;
+    }
+    
+    /* Streamlit columns alignment fix */
+    div[data-testid="column"] {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 0px !important;
+    }
+    
+    /* Input box style reset */
+    .stTextInput input {
+        background-color: transparent !important;
+        border: none !important;
+        color: white !important;
+        padding: 0px !important;
+    }
+    </style>
+""", unsafe_allowed_html=True)
+
 st.title("🤖 NEX AI Assistant")
 st.caption("Made by Mr.Amankhan | Available 24/7 Live")
 
@@ -31,11 +71,9 @@ if "show_upload" not in st.session_state:
     st.session_state.show_upload = False
 
 # ==========================================
-# SIDEBAR FEATURES (Cleaned Up - Only Clear Chat)
+# SIDEBAR FEATURES (Only Clear Chat)
 # ==========================================
 st.sidebar.title("⚙️ NEX AI Options")
-
-# Clear Chat Button
 if st.sidebar.button("🧹 Clear Chat History", type="primary"):
     st.session_state.messages = []
     st.session_state.show_upload = False
@@ -44,33 +82,20 @@ if st.sidebar.button("🧹 Clear Chat History", type="primary"):
 # ==========================================
 # MAIN CHAT HISTORY SCREEN
 # ==========================================
-# Purani chats ko screen par dikhana
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
 # ==========================================
-# MODERN ROW CONTROL (Plus Icon & Voice Mic)
+# GEMINI STYLE FILE UPLOAD CONTAINER
 # ==========================================
-st.markdown("---")
-
-# Spacing setup: Left side button, space, Right side Mic button
-ctrl_col1, ctrl_col2, ctrl_col3 = st.columns([1, 8, 1])
-
-with ctrl_col1:
-    # Toggle pop-up menu for file upload
-    if st.button("➕", help="Upload Files/Photos", key="plus_toggle"):
-        st.session_state.show_upload = not st.session_state.show_upload
-        st.rerun()
-
 file_context = ""
-# Gemini jaisa hidden file upload panel jo + dabane par hi khulega
 if st.session_state.show_upload:
     with st.container(border=True):
         uploaded_file = st.file_uploader(
             "Upload text, docs, PDFs, or photos", 
             type=["txt", "py", "md", "pdf", "docx", "jpg", "jpeg", "png"],
-            label_visibility="visible"
+            label_visibility="collapsed"
         )
         if uploaded_file is not None:
             if "image" in uploaded_file.type:
@@ -88,8 +113,26 @@ if st.session_state.show_upload:
                 except Exception as e:
                     st.error(f"Error: {e}")
 
+st.markdown("---")
+
+# ==========================================
+# 100% INLINE CHAT BAR (As per new.png)
+# ==========================================
+# Yahan humne exact grid column setup kiya hai jo mobile pe bhi stack nahi hoga
+ctrl_col1, ctrl_col2, ctrl_col3, ctrl_col4 = st.columns([1, 8, 1, 1])
+
+with ctrl_col1:
+    # Left End: Plus Icon
+    if st.button("➕", help="Upload Files/Photos", key="plus_toggle"):
+        st.session_state.show_upload = not st.session_state.show_upload
+        st.rerun()
+
+with ctrl_col2:
+    # Center: Text Input Box (Border hidden via CSS to blend perfectly)
+    user_text_input = st.text_input("Ask me anything...", placeholder="Ask me anything...", label_visibility="collapsed", key="text_chat_input")
+
 with ctrl_col3:
-    # Voice Input - Bada button aur branding hatakar sirf mic rakha hai
+    # Right Side: Voice Mic (Directly inside the row)
     voice_text = speech_to_text(
         start_prompt="🎙️", 
         stop_prompt="⏹️", 
@@ -97,17 +140,20 @@ with ctrl_col3:
         key='groq_mic'
     )
 
-# ==========================================
-# CHAT INPUT & EXECUTION
-# ==========================================
-# Pure input box jaisa tumne new.png me manga tha
-user_input = st.chat_input("Ask me anything...")
+with ctrl_col4:
+    # Right End: Enter/Send Button
+    send_trigger = st.button("⬆️", key="send_action")
 
-# Dono me se jo bhi input pehle aaye
-final_prompt = user_input if user_input else voice_text
+# ==========================================
+# CHAT EXECUTION LOGIC
+# ==========================================
+final_prompt = None
+if send_trigger and user_text_input:
+    final_prompt = user_text_input
+elif voice_text:
+    final_prompt = voice_text
 
 if final_prompt:
-    # Context merge logic
     if file_context:
         full_prompt = f"Context from file:\n{file_context}\n\nUser Question: {final_prompt}"
     else:
@@ -117,7 +163,6 @@ if final_prompt:
     with st.chat_message("user"):
         st.markdown(final_prompt)
 
-    # AI Response generation
     with st.chat_message("assistant"):
         message_placeholder = st.empty()
         full_response = ""
@@ -147,6 +192,5 @@ if final_prompt:
             
     st.session_state.messages.append({"role": "assistant", "content": full_response})
     
-    # Message send hone ke baad file pop-up ko band kar dena
     st.session_state.show_upload = False
     st.rerun()
