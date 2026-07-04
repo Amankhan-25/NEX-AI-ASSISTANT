@@ -3,13 +3,27 @@ from groq import Groq
 from streamlit_mic_recorder import speech_to_text
 import pypdf
 
-# Page layout aur title setup
+# 1. Page Config (Sabse upar hona chahiye)
 st.set_page_config(page_title="NEX AI Assistant", page_icon="🤖", layout="centered")
+
+# Custom CSS taaki input columns ek line me perfect dikhein
+st.markdown("""
+    <style>
+    div[data-testid="column"] {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .stTextInput>div>div>input {
+        padding: 10px;
+    }
+    </style>
+""", unsafe_allowed_html=True)
 
 st.title("🤖 NEX AI Assistant")
 st.caption("Made by Mr.Amankhan | Available 24/7 Live")
 
-# Streamlit ke Secrets se API Key securely nikalna
+# 2. API Key Management
 if "GROQ_API_KEY" in st.secrets:
     api_key = st.secrets["GROQ_API_KEY"]
 else:
@@ -19,42 +33,29 @@ if not api_key:
     st.info("Please add your Groq API Key to start chatting!", icon="🔑")
     st.stop()
 
-# Groq Client start karna
 client = Groq(api_key=api_key)
 
-# Chat history aur session states initialize karna
+# 3. Session States Setup
 if "messages" not in st.session_state:
     st.session_state.messages = []
 if "show_upload" not in st.session_state:
     st.session_state.show_upload = False
-if "voice_active" not in st.session_state:
-    st.session_state.voice_active = False
 
-# ==========================================
-# SIDEBAR FEATURES
-# ==========================================
+# Sidebar Options (Sirf Clear Chat rakha hai)
 st.sidebar.title("⚙️ NEX AI Options")
-
-# Clear Chat Button
 if st.sidebar.button("🧹 Clear Chat History", type="primary"):
     st.session_state.messages = []
     st.session_state.show_upload = False
-    st.session_state.voice_active = False
     st.rerun()
 
-# ==========================================
-# MAIN CHAT HISTORY SCREEN
-# ==========================================
-# Chat messages ke liye container taaki scroll proper rahe
+# 4. Chat History Render Container
 chat_container = st.container()
 with chat_container:
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-# ==========================================
-# GEMINI STYLE FILE UPLOAD PANEL
-# ==========================================
+# 5. Gemini-style Dropdown File Uploader
 file_context = ""
 if st.session_state.show_upload:
     with st.container(border=True):
@@ -79,60 +80,49 @@ if st.session_state.show_upload:
                 except Exception as e:
                     st.error(f"Error: {e}")
 
-# ==========================================
-# FIXED SLEEK INPUT BAR LAYOUT (As per new.png)
-# ==========================================
 st.markdown("<br>", unsafe_allowed_html=True)
 
-# Ek single horizontal row (Columns) chat input ke liye
-input_col1, input_col2, input_col3, input_col4 = st.columns([0.6, 7.5, 0.7, 0.7])
+# 6. UPDATED INPUT BAR LAYOUT (Parallel Columns)
+input_col1, input_col2, input_col3, input_col4 = st.columns([0.8, 8.0, 0.8, 0.8])
 
 with input_col1:
-    # ➕ Icon Button
-    if st.button("➕", help="Upload Files/Photos", key="btn_plus"):
+    # ➕ Icon Button for file upload toggle
+    if st.button("➕", help="Upload Files", key="plus_btn"):
         st.session_state.show_upload = not st.session_state.show_upload
         st.rerun()
 
 with input_col2:
-    # Main TextInput (Placeholder: Ask me anything...)
-    # label_visibility="collapsed" se box ekdum plain text bar jaisa dikhega
-    text_prompt = st.text_input("Chat Input", placeholder="Ask me anything...", label_visibility="collapsed", key="text_msg")
+    # Text Input Box (Ask me anything...)
+    text_prompt = st.text_input("Input Text", placeholder="Ask me anything...", label_visibility="collapsed", key="user_text_input")
 
 with input_col3:
-    # Minimalist Voice Mic - Bina kisi extra text ya instructions ke
+    # Voice Input Mic Widget (No extra text labels)
     voice_prompt = speech_to_text(
         start_prompt="🎙️", 
         stop_prompt="⏹️", 
         language='en', 
-        key='groq_mic_fixed'
+        key='nex_voice_mic'
     )
 
 with input_col4:
-    # Enter / Send Button (Arrow Icon)
-    send_clicked = st.button("⬆️", key="btn_send")
+    # Send Arrow Button
+    send_btn = st.button("⬆️", key="submit_send")
 
-# ==========================================
-# FINAL PROMPT PROCESSING
-# ==========================================
+# 7. AI Logic Processing
 final_prompt = None
-
-# Agar text likh kar enter/send kiya ya voice input aaya
-if send_clicked and text_prompt:
+if send_btn and text_prompt:
     final_prompt = text_prompt
 elif voice_prompt:
     final_prompt = voice_prompt
 
 if final_prompt:
-    # Context integration logic
     if file_context:
         full_prompt = f"Context from file:\n{file_context}\n\nUser Question: {final_prompt}"
     else:
         full_prompt = final_prompt
         
-    # User message push
     st.session_state.messages.append({"role": "user", "content": final_prompt})
     
-    # AI Response generation
     with chat_container:
         with st.chat_message("user"):
             st.markdown(final_prompt)
@@ -165,7 +155,5 @@ if final_prompt:
                 st.error(f"Error: {e}")
                 
     st.session_state.messages.append({"role": "assistant", "content": full_response})
-    
-    # Reset states after sending message
     st.session_state.show_upload = False
     st.rerun()
