@@ -1,6 +1,7 @@
 import streamlit as st
 from groq import Groq
 import pypdf
+import json
 
 # Page layout aur title setup (Sabse upar hona chahiye)
 st.set_page_config(page_title="NEX AI Assistant", page_icon="🤖", layout="centered")
@@ -41,7 +42,7 @@ st.html(r"""
     /* TECHIE CHAT BUBBLES CUSTOM STYLING */
     .chat-row {
         display: flex;
-        margin-bottom: 15px;
+        margin-bottom: 5px;
         width: 100%;
     }
     .row-user {
@@ -86,9 +87,10 @@ st.html(r"""
     /* PROPER INLINE GEMINI TOOLBAR STYLING */
     .gemini-toolbar {
         display: flex;
-        gap: 14px;
+        gap: 16px;
         margin-left: 45px;
-        margin-top: 6px;
+        margin-top: 4px;
+        margin-bottom: 15px;
         align-items: center;
     }
     .tool-btn {
@@ -98,22 +100,51 @@ st.html(r"""
         cursor: pointer;
         font-size: 14px;
         transition: color 0.2s;
-        padding: 2px;
+        padding: 4px;
     }
     .tool-btn:hover {
         color: #00f2fe;
     }
+    
+    /* Native utility toast style overlay */
+    .toast-popup {
+        position: fixed;
+        bottom: 80px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #1e2238;
+        color: #00f2fe;
+        border: 1px solid #4facfe;
+        padding: 8px 16px;
+        border-radius: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        z-index: 99999;
+        font-family: sans-serif;
+    }
     </style>
     
     <script>
-    function copyToClipboard(text, idx) {
+    // System UI clipboard callback framework
+    function copyTextToClipboard(base64Text) {
+        // Decode base64 to avoid formatting breaking issues
+        const text = atob(base64Text);
         navigator.clipboard.writeText(text).then(function() {
             const toast = document.createElement('div');
+            toast.className = 'toast-popup';
             toast.innerText = '📋 Text Copied!';
-            toast.style = 'position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: #1e2238; color: #00f2fe; border: 1px solid #4facfe; padding: 8px 16px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 99999; font-family: sans-serif;';
             document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 2000);
+            setTimeout(() => toast.remove(), 1800);
+        }).catch(function(err) {
+            console.error('Could not copy text: ', err);
         });
+    }
+    
+    function triggerToast(message) {
+        const toast = document.createElement('div');
+        toast.className = 'toast-popup';
+        toast.innerText = message;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 1800);
     }
     </script>
 """)
@@ -191,8 +222,9 @@ for idx, message in enumerate(st.session_state.messages):
             </div>
         ''')
     else:
-        # Browser text format clean karne ke liye escape
-        clean_text = message["content"].replace("'", "\\'").replace("\n", "\\n")
+        # String encoding hack to safely pass data to JavaScript without crashing on quotes/newlines
+        import base64
+        encoded_response = base64.b64encode(message["content"].encode('utf-8')).decode('utf-8')
         
         # Ek single layout container me bubble aur unke tool rows ko align kiya hai
         st.html(f'''
@@ -201,14 +233,14 @@ for idx, message in enumerate(st.session_state.messages):
                     <div class="avatar">🤖</div>
                     <div class="bubble bubble-bot">{message["content"]}</div>
                 </div>
-                <!-- a2.png ka alignment fix: Perfect Horizontal Box Toolbar -->
+                <!-- Perfectly aligned tool row structure -->
                 <div class="gemini-toolbar">
-                    <button class="tool-btn" onclick="alert('👍 Thanks for the feedback!')">👍</button>
-                    <button class="tool-btn" onclick="alert('👎 Feedback recorded.')">👎</button>
+                    <button class="tool-btn" onclick="triggerToast('👍 Thanks for the feedback!')">👍</button>
+                    <button class="tool-btn" onclick="triggerToast('👎 Feedback recorded.')">👎</button>
                     <button class="tool-btn" onclick="window.location.href='?redo_idx={idx}'">🔄</button>
-                    <button class="tool-btn" onclick="alert('📤 Feature Coming Soon!')">📤</button>
-                    <!-- JavaScript Real Clipboard Copy Working Function -->
-                    <button class="tool-btn" onclick="copyToClipboard('{clean_text}', {idx})">📋</button>
+                    <button class="tool-btn" onclick="triggerToast('📤 Feature Coming Soon!')">📤</button>
+                    <!-- Base64 Decoded 100% Working Clipboard Copy Command -->
+                    <button class="tool-btn" onclick="copyTextToClipboard('{encoded_response}')">📋</button>
                 </div>
             </div>
         ''')
@@ -218,7 +250,6 @@ query_params = st.query_params
 if "redo_idx" in query_params:
     redo_index = int(query_params["redo_idx"])
     st.query_params.clear()
-    # Find matching previous user query
     for prev in reversed(st.session_state.messages[:redo_index]):
         if prev["role"] == "user":
             st.session_state.redo_query = prev["content"]
@@ -231,7 +262,7 @@ final_prompt = user_input if user_input else st.session_state.redo_query
 
 if final_prompt:
     if st.session_state.redo_query:
-        st.session_state.redo_query = None  # Clear lock
+        st.session_state.redo_query = None
         
     if file_context:
         full_prompt = f"Context from file:\n{file_context}\n\nUser Question: {final_prompt}"
@@ -264,4 +295,3 @@ if st.session_state.messages and st.session_state.messages[-1]["role"] == "user"
         st.rerun()
     except Exception as e:
         st.error(f"Error: {e}")
-        
