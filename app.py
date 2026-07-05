@@ -1,13 +1,13 @@
 import streamlit as st
 from groq import Groq
 import pypdf
-import json
+import base64
 
 # Page layout aur title setup (Sabse upar hona chahiye)
 st.set_page_config(page_title="NEX AI Assistant", page_icon="🤖", layout="centered")
 
 # ==========================================
-# SAFE DYNAMIC TECHY & GEMINI-INSPIRED THEME
+# ADVANCED TECHY THEME WITH INLINE BUTTONS FIX
 # ==========================================
 st.html(r"""
     <style>
@@ -50,12 +50,6 @@ st.html(r"""
     }
     .row-bot {
         justify-content: flex-start;
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    .bubble-wrapper {
-        display: flex;
-        align-items: flex-start;
     }
     .bubble {
         padding: 12px 16px;
@@ -84,67 +78,44 @@ st.html(r"""
         align-items: center;
     }
     
-    /* PROPER INLINE GEMINI TOOLBAR STYLING */
-    .gemini-toolbar {
-        display: flex;
-        gap: 16px;
-        margin-left: 45px;
-        margin-top: 4px;
-        margin-bottom: 15px;
-        align-items: center;
+    /* FIX FOR THE STRANGE BUTTON BOXES (a2.png Fix) */
+    div[data-testid="stHorizontalBlock"] button {
+        background-color: transparent !important;
+        border: none !important;
+        padding: 2px 6px !important;
+        margin: 0px !important;
+        width: auto !important;
+        height: auto !important;
+        box-shadow: none !important;
+        font-size: 16px !important;
+        transition: transform 0.2s ease;
     }
-    .tool-btn {
-        background: transparent;
-        border: none;
-        color: #8a8d9f;
-        cursor: pointer;
-        font-size: 14px;
-        transition: color 0.2s;
-        padding: 4px;
+    div[data-testid="stHorizontalBlock"] button:hover {
+        transform: scale(1.2);
+        background-color: transparent !important;
     }
-    .tool-btn:hover {
-        color: #00f2fe;
+    div[data-testid="stHorizontalBlock"] button p {
+        font-size: 16px !important;
     }
     
-    /* Native utility toast style overlay */
-    .toast-popup {
-        position: fixed;
-        bottom: 80px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: #1e2238;
-        color: #00f2fe;
-        border: 1px solid #4facfe;
-        padding: 8px 16px;
-        border-radius: 20px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-        z-index: 99999;
-        font-family: sans-serif;
+    /* Gemini Action Toolbar Spacing */
+    .action-bar-container {
+        margin-left: 45px;
+        margin-bottom: 15px;
+        margin-top: -5px;
     }
     </style>
     
     <script>
-    // System UI clipboard callback framework
-    function copyTextToClipboard(base64Text) {
-        // Decode base64 to avoid formatting breaking issues
+    // Real-time Operating System Clipboard Copy Function
+    function nexCopyToClipboard(base64Text) {
         const text = atob(base64Text);
         navigator.clipboard.writeText(text).then(function() {
-            const toast = document.createElement('div');
-            toast.className = 'toast-popup';
-            toast.innerText = '📋 Text Copied!';
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 1800);
+            // Streamlit Native Component standard communication framework fallback text
+            console.log('Copied successfully');
         }).catch(function(err) {
-            console.error('Could not copy text: ', err);
+            console.error('Failed to copy text: ', err);
         });
-    }
-    
-    function triggerToast(message) {
-        const toast = document.createElement('div');
-        toast.className = 'toast-popup';
-        toast.innerText = message;
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 1800);
     }
     </script>
 """)
@@ -168,6 +139,8 @@ client = Groq(api_key=api_key)
 # Chat history initialize karna
 if "messages" not in st.session_state:
     st.session_state.messages = []
+if "regenerate_trigger" not in st.session_state:
+    st.session_state.regenerate_trigger = None
 
 # ==========================================
 # SIDEBAR FEATURES
@@ -205,14 +178,10 @@ if uploaded_file is not None:
             st.sidebar.error(f"Error reading file: {e}")
 
 # ==========================================
-# MAIN CHAT LOGIC WITH INLINE GEMINI CONTROLS
+# MAIN CHAT LOGIC WITH FIXED GEMINI TOOLBAR
 # ==========================================
 
-# Query Re-generation checker
-if "redo_query" not in st.session_state:
-    st.session_state.redo_query = None
-
-# Purani chats ko render karna
+# Purani chats ko screen par dikhana
 for idx, message in enumerate(st.session_state.messages):
     if message["role"] == "user":
         st.html(f'''
@@ -222,48 +191,52 @@ for idx, message in enumerate(st.session_state.messages):
             </div>
         ''')
     else:
-        # String encoding hack to safely pass data to JavaScript without crashing on quotes/newlines
-        import base64
-        encoded_response = base64.b64encode(message["content"].encode('utf-8')).decode('utf-8')
-        
-        # Ek single layout container me bubble aur unke tool rows ko align kiya hai
+        # Assistant Response Bubble
         st.html(f'''
             <div class="chat-row row-bot">
-                <div class="bubble-wrapper">
-                    <div class="avatar">🤖</div>
-                    <div class="bubble bubble-bot">{message["content"]}</div>
-                </div>
-                <!-- Perfectly aligned tool row structure -->
-                <div class="gemini-toolbar">
-                    <button class="tool-btn" onclick="triggerToast('👍 Thanks for the feedback!')">👍</button>
-                    <button class="tool-btn" onclick="triggerToast('👎 Feedback recorded.')">👎</button>
-                    <button class="tool-btn" onclick="window.location.href='?redo_idx={idx}'">🔄</button>
-                    <button class="tool-btn" onclick="triggerToast('📤 Feature Coming Soon!')">📤</button>
-                    <!-- Base64 Decoded 100% Working Clipboard Copy Command -->
-                    <button class="tool-btn" onclick="copyTextToClipboard('{encoded_response}')">📋</button>
-                </div>
+                <div class="avatar">🤖</div>
+                <div class="bubble bubble-bot">{message["content"]}</div>
             </div>
         ''')
+        
+        # Wrapped container for perfect alignment alignment
+        st.markdown('<div class="action-bar-container">', unsafe_allowed_html=True)
+        btn_cols = st.columns([0.05, 0.05, 0.05, 0.05, 0.05, 0.75], gap="small")
+        
+        with btn_cols[0]:
+            if st.button("👍", key=f"good_{idx}", help="Good response"):
+                st.toast("Thanks for feedback! 👍")
+        with btn_cols[1]:
+            if st.button("👎", key=f"bad_{idx}", help="Bad response"):
+                st.toast("Feedback recorded to improve NEX. 👎")
+        with btn_cols[2]:
+            if st.button("🔄", key=f"redo_{idx}", help="Regenerate response"):
+                for prev in reversed(st.session_state.messages[:idx]):
+                    if prev["role"] == "user":
+                        st.session_state.regenerate_trigger = prev["content"]
+                        st.rerun()
+        with btn_cols[3]:
+            st.download_button("📤", data=message["content"], file_name="nex_response.txt", key=f"share_{idx}", help="Export response")
+        with btn_cols[4]:
+            # Fixed Copy Button using dynamic Base64 encryption to avoid break codes
+            encoded_txt = base64.b64encode(message["content"].encode('utf-8')).decode('utf-8')
+            if st.button("📋", key=f"copy_{idx}", help="Copy to clipboard"):
+                st.html(f"<script>nexCopyToClipboard('{encoded_txt}');</script>")
+                st.toast("Copied to clipboard! 📋")
+        st.markdown('</div>', unsafe_allowed_html=True)
 
-# Handle Redo clicks smoothly
-query_params = st.query_params
-if "redo_idx" in query_params:
-    redo_index = int(query_params["redo_idx"])
-    st.query_params.clear()
-    for prev in reversed(st.session_state.messages[:redo_index]):
-        if prev["role"] == "user":
-            st.session_state.redo_query = prev["content"]
-            st.rerun()
-
-# Text Chat Input Processing
+# Input Processing Elements
 user_input = st.chat_input("Ask me anything...")
 
-final_prompt = user_input if user_input else st.session_state.redo_query
+# Redo chain activation override
+final_prompt = None
+if user_input:
+    final_prompt = user_input
+elif st.session_state.regenerate_trigger:
+    final_prompt = st.session_state.regenerate_trigger
+    st.session_state.regenerate_trigger = None  # Reset state after trigger
 
 if final_prompt:
-    if st.session_state.redo_query:
-        st.session_state.redo_query = None
-        
     if file_context:
         full_prompt = f"Context from file:\n{file_context}\n\nUser Question: {final_prompt}"
     else:
@@ -272,7 +245,7 @@ if final_prompt:
     st.session_state.messages.append({"role": "user", "content": final_prompt})
     st.rerun()
 
-# AI Assistant Text Execution Chain
+# AI Response Generation Setup
 if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
     latest_user_msg = st.session_state.messages[-1]["content"]
     
@@ -295,3 +268,4 @@ if st.session_state.messages and st.session_state.messages[-1]["role"] == "user"
         st.rerun()
     except Exception as e:
         st.error(f"Error: {e}")
+        
