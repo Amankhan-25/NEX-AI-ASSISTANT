@@ -78,11 +78,11 @@ st.html(r"""
         align-items: center;
     }
     
-    /* FIX FOR THE STRANGE BUTTON BOXES (a2.png Fix) */
+    /* Buttons transparent alignment override to fix borders */
     div[data-testid="stHorizontalBlock"] button {
         background-color: transparent !important;
         border: none !important;
-        padding: 2px 6px !important;
+        padding: 2px 4px !important;
         margin: 0px !important;
         width: auto !important;
         height: auto !important;
@@ -98,20 +98,16 @@ st.html(r"""
         font-size: 16px !important;
     }
     
-    /* Gemini Action Toolbar Spacing */
-    .action-bar-container {
-        margin-left: 45px;
-        margin-bottom: 15px;
-        margin-top: -5px;
+    /* Fix row column wrapper padding gaps */
+    div[data-testid="element-container"] + div[data-testid="element-container"] {
+        margin-top: 0px !important;
     }
     </style>
     
     <script>
-    // Real-time Operating System Clipboard Copy Function
     function nexCopyToClipboard(base64Text) {
         const text = atob(base64Text);
         navigator.clipboard.writeText(text).then(function() {
-            // Streamlit Native Component standard communication framework fallback text
             console.log('Copied successfully');
         }).catch(function(err) {
             console.error('Failed to copy text: ', err);
@@ -199,31 +195,29 @@ for idx, message in enumerate(st.session_state.messages):
             </div>
         ''')
         
-        # Wrapped container for perfect alignment alignment
-        st.markdown('<div class="action-bar-container">', unsafe_allowed_html=True)
-        btn_cols = st.columns([0.05, 0.05, 0.05, 0.05, 0.05, 0.75], gap="small")
+        # a3.png fix: st.markdown ke incomplete div structures ko remove karke direct indentation column padding di hai
+        btn_cols = st.columns([0.06, 0.05, 0.05, 0.05, 0.05, 0.05, 0.69], gap="small")
         
-        with btn_cols[0]:
+        # Phele column ko spacer banaya taaki robot icon ke theek niche se aligned shuru ho
+        with btn_cols[1]:
             if st.button("👍", key=f"good_{idx}", help="Good response"):
                 st.toast("Thanks for feedback! 👍")
-        with btn_cols[1]:
+        with btn_cols[2]:
             if st.button("👎", key=f"bad_{idx}", help="Bad response"):
                 st.toast("Feedback recorded to improve NEX. 👎")
-        with btn_cols[2]:
+        with btn_cols[3]:
             if st.button("🔄", key=f"redo_{idx}", help="Regenerate response"):
                 for prev in reversed(st.session_state.messages[:idx]):
                     if prev["role"] == "user":
                         st.session_state.regenerate_trigger = prev["content"]
                         st.rerun()
-        with btn_cols[3]:
-            st.download_button("📤", data=message["content"], file_name="nex_response.txt", key=f"share_{idx}", help="Export response")
         with btn_cols[4]:
-            # Fixed Copy Button using dynamic Base64 encryption to avoid break codes
+            st.download_button("📤", data=message["content"], file_name="nex_response.txt", key=f"share_{idx}", help="Export response")
+        with btn_cols[5]:
             encoded_txt = base64.b64encode(message["content"].encode('utf-8')).decode('utf-8')
             if st.button("📋", key=f"copy_{idx}", help="Copy to clipboard"):
                 st.html(f"<script>nexCopyToClipboard('{encoded_txt}');</script>")
                 st.toast("Copied to clipboard! 📋")
-        st.markdown('</div>', unsafe_allowed_html=True)
 
 # Input Processing Elements
 user_input = st.chat_input("Ask me anything...")
@@ -234,7 +228,7 @@ if user_input:
     final_prompt = user_input
 elif st.session_state.regenerate_trigger:
     final_prompt = st.session_state.regenerate_trigger
-    st.session_state.regenerate_trigger = None  # Reset state after trigger
+    st.session_state.regenerate_trigger = None
 
 if final_prompt:
     if file_context:
@@ -268,4 +262,3 @@ if st.session_state.messages and st.session_state.messages[-1]["role"] == "user"
         st.rerun()
     except Exception as e:
         st.error(f"Error: {e}")
-        
