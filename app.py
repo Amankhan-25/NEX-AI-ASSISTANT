@@ -77,59 +77,45 @@ st.html(r"""
         align-items: center;
     }
     
-    /* MOBILE & PC HORIZONTAL ROW STYLING */
-    div[data-testid="stHorizontalBlock"] {
+    /* HOLLOW TOOLBAR ROW ALIGNMENT - MULTI DEVICE SUPPORT */
+    .hollow-toolbar {
         display: flex !important;
         flex-direction: row !important;
-        flex-wrap: nowrap !important;
-        align-items: center !important;
-        justify-content: flex-start !important;
-        gap: 12px !important;
+        gap: 16px !important;
         margin-left: 45px !important;
-        margin-top: 2px !important;
-        margin-bottom: 15px !important;
+        margin-top: 6px !important;
+        margin-bottom: 18px !important;
+        align-items: center !important;
     }
     
-    div[data-testid="stHorizontalBlock"] > div {
-        width: auto !important;
-        min-width: unset !important;
-    }
-    
-    /* PURE HOLLOW OUTLINE STRUCTURAL BUTTONS */
-    div[data-testid="stHorizontalBlock"] button {
-        background-color: transparent !important;
+    /* PURE BORDER HOLLOW BUTTONS */
+    .outline-action-btn {
+        background: transparent !important;
         border: none !important;
-        padding: 2px 4px !important;
-        margin: 0px !important;
-        width: auto !important;
-        height: auto !important;
-        box-shadow: none !important;
-        transition: transform 0.2s ease !important;
+        color: #8a8d9f !important;
+        cursor: pointer !important;
+        text-decoration: none !important;
+        padding: 4px !important;
+        display: flex !important;
+        align-items: center !important;
+        transition: transform 0.2s ease, color 0.2s ease !important;
     }
     
-    /* SVG stroke shapes handle inside native button frame */
-    div[data-testid="stHorizontalBlock"] button svg {
-        stroke: #8a8d9f !important; /* Border color */
-        fill: transparent !important; /* Middle completely invisible */
-        stroke-width: 2px !important;
-        width: 18px !important;
-        height: 18px !important;
+    .outline-action-btn svg {
+        stroke: #8a8d9f !important;
+        fill: transparent !important; /* Middle content invisible structure */
+        stroke-width: 2px;
+        width: 18px;
+        height: 18px;
         transition: stroke 0.2s ease !important;
     }
     
-    /* Hover/Tap style glow active trigger */
-    div[data-testid="stHorizontalBlock"] button:hover svg {
-        stroke: #00f2fe !important;
-        transform: scale(1.1);
+    .outline-action-btn:hover svg {
+        stroke: #00f2fe !important; /* Glow target cyan colors */
     }
     
-    div[data-testid="stHorizontalBlock"] button p {
-        display: none !important; /* Hide native text if any fallback triggers */
-    }
-    
-    /* Fix padding gaps */
-    div[data-testid="element-container"] + div[data-testid="element-container"] {
-        margin-top: 0px !important;
+    .outline-action-btn:hover {
+        transform: scale(1.15);
     }
     </style>
 """)
@@ -153,8 +139,6 @@ client = Groq(api_key=api_key)
 # Chat history initialize karna
 if "messages" not in st.session_state:
     st.session_state.messages = []
-if "regenerate_trigger" not in st.session_state:
-    st.session_state.regenerate_trigger = None
 
 # ==========================================
 # SIDEBAR FEATURES
@@ -192,8 +176,29 @@ if uploaded_file is not None:
             st.sidebar.error(f"Error reading file: {e}")
 
 # ==========================================
-# MAIN CHAT LOGIC WITH HOLLOW OUTLINE ICONS
+# MAIN CHAT LOGIC WITH PURE SVG HOLLOW ICONS
 # ==========================================
+
+# Query Re-generation checker
+if "redo_query" not in st.session_state:
+    st.session_state.redo_query = None
+
+# Custom URL param captures for instant responsiveness without system freeze
+query_params = st.query_params
+if "action" in query_params:
+    act = query_params["action"]
+    idx = int(query_params.get("id", 0))
+    st.query_params.clear()
+    
+    if act == "good":
+        st.toast("Thanks for feedback! 👍")
+    elif act == "bad":
+        st.toast("Feedback recorded to improve NEX. 👎")
+    elif act == "redo":
+        for prev in reversed(st.session_state.messages[:idx]):
+            if prev["role"] == "user":
+                st.session_state.redo_query = prev["content"]
+                st.rerun()
 
 # Purani chats ko screen par dikhana
 for idx, message in enumerate(st.session_state.messages):
@@ -211,46 +216,28 @@ for idx, message in enumerate(st.session_state.messages):
                 <div class="avatar">🤖</div>
                 <div class="bubble bubble-bot">{message["content"]}</div>
             </div>
+            <!-- Pure Responsive Inline Vector Row -->
+            <div class="hollow-toolbar">
+                <a class="outline-action-btn" href="?action=good&id={idx}" target="_self">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
+                </a>
+                <a class="outline-action-btn" href="?action=bad&id={idx}" target="_self">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm12-13h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"/></svg>
+                </a>
+                <a class="outline-action-btn" href="?action=redo&id={idx}" target="_self">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                </a>
+            </div>
         ''')
-        
-        # Flex toolbar row with pure hollow outline SVG vectors
-        btn_cols = st.columns([1, 1, 1, 1, 12])
-        
-        with btn_cols[0]:
-            # Thumbs Up Outline vector
-            if st.button("", key=f"good_{idx}", help="Good response"):
-                st.toast("Thanks for feedback! 👍")
-            st.html(f"<script>document.getElementById('good_{idx}').innerHTML = '<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3\"></svg>';</script>")
-            
-        with btn_cols[1]:
-            # Thumbs Down Outline vector
-            if st.button("", key=f"bad_{idx}", help="Bad response"):
-                st.toast("Feedback recorded to improve NEX. 👎")
-            st.html(f"<script>document.getElementById('bad_{idx}').innerHTML = '<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm12-13h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3\"></svg>';</script>")
-            
-        with btn_cols[2]:
-            # Redo Refresh Outline vector
-            if st.button("", key=f"redo_{idx}", help="Regenerate response"):
-                for prev in reversed(st.session_state.messages[:idx]):
-                    if prev["role"] == "user":
-                        st.session_state.regenerate_trigger = prev["content"]
-                        st.rerun()
-            st.html(f"<script>document.getElementById('redo_{idx}').innerHTML = '<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67\"></svg>';</script>")
-            
-        with btn_cols[3]:
-            # Export Share Outline vector
-            st.download_button("", data=message["content"], file_name="nex_response.txt", key=f"share_{idx}", help="Export response")
-            st.html(f"<script>document.getElementById('share_{idx}').innerHTML = '<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13\"></svg>';</script>")
 
 # Input Processing Elements
 user_input = st.chat_input("Ask me anything...")
 
-# Redo chain activation override
-final_prompt = user_input if user_input else st.session_state.regenerate_trigger
+final_prompt = user_input if user_input else st.session_state.redo_query
 
 if final_prompt:
-    if st.session_state.regenerate_trigger:
-        st.session_state.regenerate_trigger = None
+    if st.session_state.redo_query:
+        st.session_state.redo_query = None
         
     if file_context:
         full_prompt = f"Context from file:\n{file_context}\n\nUser Question: {final_prompt}"
@@ -283,3 +270,4 @@ if st.session_state.messages and st.session_state.messages[-1]["role"] == "user"
         st.rerun()
     except Exception as e:
         st.error(f"Error: {e}")
+        
