@@ -6,7 +6,7 @@ import pypdf
 st.set_page_config(page_title="NEX AI Assistant", page_icon="🤖", layout="centered")
 
 # ==========================================
-# ADVANCED TECHY THEME WITH INLINE BUTTONS FIX
+# ADVANCED TECHY THEME WITH MOBILE HORIZONTAL BUTTONS FIX
 # ==========================================
 st.html(r"""
     <style>
@@ -77,7 +77,27 @@ st.html(r"""
         align-items: center;
     }
     
-    /* Buttons transparent alignment override to fix borders */
+    /* CRITICAL MOBILE HORIZONTAL FIX (a.jpg Fix) */
+    /* Mobile standard responsive layout ko override karke single inline layout force karna */
+    div[data-testid="stHorizontalBlock"] {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        gap: 8px !important;
+        margin-left: 42px !important;
+        margin-top: -2px !important;
+        margin-bottom: 12px !important;
+    }
+    
+    /* Individual column elements display fix inside flex row */
+    div[data-testid="stHorizontalBlock"] > div {
+        width: auto !important;
+        min-width: unset !important;
+    }
+    
+    /* Buttons transparent alignment override to remove boxes */
     div[data-testid="stHorizontalBlock"] button {
         background-color: transparent !important;
         border: none !important;
@@ -97,7 +117,7 @@ st.html(r"""
         font-size: 16px !important;
     }
     
-    /* Fix row column wrapper padding gaps */
+    /* Fix padding gaps */
     div[data-testid="element-container"] + div[data-testid="element-container"] {
         margin-top: 0px !important;
     }
@@ -162,7 +182,7 @@ if uploaded_file is not None:
             st.sidebar.error(f"Error reading file: {e}")
 
 # ==========================================
-# MAIN CHAT LOGIC WITH INLINE GEMINI TOOLBAR
+# MAIN CHAT LOGIC WITH FIXED GEMINI TOOLBAR
 # ==========================================
 
 # Purani chats ko screen par dikhana
@@ -183,22 +203,22 @@ for idx, message in enumerate(st.session_state.messages):
             </div>
         ''')
         
-        # Action alignment toolbar columns (Removed Copy Column, Ajusted width layout)
-        btn_cols = st.columns([0.06, 0.05, 0.05, 0.05, 0.05, 0.74], gap="small")
+        # Flex layout automatic columns - Mobile structure optimized
+        btn_cols = st.columns([1, 1, 1, 1, 12])
         
-        with btn_cols[1]:
+        with btn_cols[0]:
             if st.button("👍", key=f"good_{idx}", help="Good response"):
                 st.toast("Thanks for feedback! 👍")
-        with btn_cols[2]:
+        with btn_cols[1]:
             if st.button("👎", key=f"bad_{idx}", help="Bad response"):
                 st.toast("Feedback recorded to improve NEX. 👎")
-        with btn_cols[3]:
+        with btn_cols[2]:
             if st.button("🔄", key=f"redo_{idx}", help="Regenerate response"):
                 for prev in reversed(st.session_state.messages[:idx]):
                     if prev["role"] == "user":
                         st.session_state.regenerate_trigger = prev["content"]
                         st.rerun()
-        with btn_cols[4]:
+        with btn_cols[3]:
             st.download_button("📤", data=message["content"], file_name="nex_response.txt", key=f"share_{idx}", help="Export response")
 
 # Input Processing Elements
