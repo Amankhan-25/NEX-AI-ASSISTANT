@@ -3,72 +3,51 @@ from groq import Groq
 from streamlit_mic_recorder import speech_to_text
 import pypdf
 
-# Page layout aur title setup
+# Page layout aur title setup (Sabse upar hona chahiye)
 st.set_page_config(page_title="NEX AI Assistant", page_icon="🤖", layout="centered")
 
 # ==========================================
-# ADVANCED TECHY & GEMINI-INSPIRED THEME (CSS)
+# SAFE DYNAMIC TECHY & GEMINI-INSPIRED THEME
 # ==========================================
-st.markdown("""
+# Python 3.14 crash se bachne ke liye safe rendering format
+st.html(r"""
     <style>
-    /* Main Background & Techy Gradient Vibe */
+    /* Main Background Tech Gradient */
     .stApp {
-        background: linear-gradient(135deg, #0b0d19 0%, #111424 50%, #0d0f1d 100%);
-        color: #e2e8f0;
-        font-family: 'Inter', sans-serif;
+        background: linear-gradient(135deg, #0b0d19 0%, #111424 50%, #0d0f1d 100%) !important;
+        color: #e2e8f0 !important;
     }
     
-    /* Top Header/Title Styling */
+    /* Gemini Glowing Gradient Title */
     h1 {
-        color: #ffffff !important;
-        font-weight: 800 !important;
         background: linear-gradient(45deg, #4facfe 0%, #00f2fe 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        letter-spacing: -0.5px;
     }
     
-    /* Sidebar / Glassmorphism effect */
+    /* Sidebar Glassmorphism */
     section[data-testid="stSidebar"] {
         background-color: rgba(17, 20, 36, 0.7) !important;
         backdrop-filter: blur(10px);
         border-right: 1px solid rgba(255, 255, 255, 0.05);
     }
     
-    /* Chat Input Bar - Gemini Floating Box Style */
+    /* Chat Input Floating Box Vibe */
     div[data-testid="stChatInput"] {
         background-color: #1e2238 !important;
         border: 1px solid rgba(79, 172, 254, 0.3) !important;
         border-radius: 16px !important;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), 0 0 15px rgba(79, 172, 254, 0.1);
-        padding: 4px !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
     }
     
-    div[data-testid="stChatInput"] textarea {
-        color: #ffffff !important;
-    }
-    
-    /* Chat Message Bubbles Customized */
+    /* Message Bubbles Tech Style */
     div[data-testid="stChatMessage"] {
         background-color: rgba(30, 34, 56, 0.4) !important;
         border-radius: 12px;
         border: 1px solid rgba(255, 255, 255, 0.03);
-        margin-bottom: 10px;
-        padding: 15px !important;
-    }
-    
-    /* User Message distinct style */
-    div[data-testid="stChatMessageUser"] {
-        background-color: rgba(79, 172, 254, 0.1) !important;
-        border: 1px solid rgba(79, 172, 254, 0.2) !important;
-    }
-    
-    /* Custom divider */
-    hr {
-        border-color: rgba(255, 255, 255, 0.05) !important;
     }
     </style>
-""", unsafe_allowed_html=True)
+""")
 
 st.title("🤖 NEX AI Assistant")
 st.caption("Made by Mr.Amankhan | Available 24/7 Live")
@@ -91,7 +70,7 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 
 # ==========================================
-# SIDEBAR FEATURES (Clear Chat & Advanced File Upload)
+# SIDEBAR FEATURES
 # ==========================================
 st.sidebar.title("⚙️ NEX AI Options")
 
@@ -102,7 +81,7 @@ if st.sidebar.button("🧹 Clear Chat History", type="primary"):
 
 st.sidebar.markdown("---")
 
-# Upgraded File Uploader (Text, PDFs, Word, Photos)
+# Upgraded File Uploader
 uploaded_file = st.sidebar.file_uploader(
     "📄 Upload Files or Photos", 
     type=["txt", "py", "md", "pdf", "docx", "jpg", "jpeg", "png"]
@@ -110,21 +89,16 @@ uploaded_file = st.sidebar.file_uploader(
 file_context = ""
 
 if uploaded_file is not None:
-    file_details = {"FileName": uploaded_file.name, "FileType": uploaded_file.type}
-    
-    # Check if it's an image
     if "image" in uploaded_file.type:
         st.sidebar.image(uploaded_file, caption="Uploaded Photo", use_container_width=True)
         file_context = f"[User uploaded a photo named '{uploaded_file.name}']"
         st.sidebar.warning("Note: Images are recognized, text analysis coming soon!")
     else:
         try:
-            # Handle PDF
             if uploaded_file.name.endswith('.pdf'):
                 pdf_reader = pypdf.PdfReader(uploaded_file)
                 for page in pdf_reader.pages:
                     file_context += page.extract_text()
-            # Handle Text Files
             else:
                 file_context = uploaded_file.read().decode("utf-8")
             st.sidebar.success(f"📄 {uploaded_file.name} loaded successfully!")
@@ -140,19 +114,17 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# --- GEMINI STYLE VOICE INPUT CONTAINER ---
+# --- VOICE INPUT CONTAINER ---
 st.markdown("### 🎙️ Speak to NEX AI")
-# Ye button aapki aawaz ko sunega aur direct text me convert kar dega
 voice_text = speech_to_text(start_prompt="🔴 Tap to Speak", stop_prompt="⏹️ Stop Recording", language='en', key='groq_mic')
 
 # Text Chat Input
 user_input = st.chat_input("Ask me anything...")
 
-# Dono me se jo bhi input aaye, use final prompt banana
+# Final prompt decision
 final_prompt = user_input if user_input else voice_text
 
 if final_prompt:
-    # Agar document upload hua hai toh uska content sath me jodna
     if file_context and user_input:
         full_prompt = f"Context from file:\n{file_context}\n\nUser Question: {final_prompt}"
     else:
@@ -191,3 +163,5 @@ if final_prompt:
             st.error(f"Error: {e}")
             
     st.session_state.messages.append({"role": "assistant", "content": full_response})
+    st.rerun()
+    
