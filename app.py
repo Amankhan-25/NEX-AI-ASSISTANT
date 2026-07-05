@@ -6,7 +6,7 @@ import pypdf
 st.set_page_config(page_title="NEX AI Assistant", page_icon="🤖", layout="centered")
 
 # ==========================================
-# ADVANCED TECHY THEME WITH FIXED HOLLOW ICONS
+# ADVANCED TECHY THEME WITH DIM ICONS FIX
 # ==========================================
 st.html(r"""
     <style>
@@ -77,17 +77,17 @@ st.html(r"""
         align-items: center;
     }
     
-    /* MOBILE & PC ABSOLUTE HORIZONTAL ROW STYLING */
+    /* MOBILE & PC HORIZONTAL ROW STYLING */
     div[data-testid="stHorizontalBlock"] {
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
         align-items: center !important;
         justify-content: flex-start !important;
-        gap: 12px !important;
-        margin-left: 45px !important;
-        margin-top: 2px !important;
-        margin-bottom: 15px !important;
+        gap: 8px !important;
+        margin-left: 42px !important;
+        margin-top: -2px !important;
+        margin-bottom: 12px !important;
     }
     
     div[data-testid="stHorizontalBlock"] > div {
@@ -95,7 +95,7 @@ st.html(r"""
         min-width: unset !important;
     }
     
-    /* PURE HOLLOW BUTTONS OVERRIDE */
+    /* FIXED DIM & LIGHT OVERRIDE FOR ICONS */
     div[data-testid="stHorizontalBlock"] button {
         background-color: transparent !important;
         border: none !important;
@@ -105,26 +105,22 @@ st.html(r"""
         height: auto !important;
         box-shadow: none !important;
         
-        /* Thin wireframe outline alignment styling */
+        /* Icons ko light, dim aur subtle greyish tone dene ke liye */
         opacity: 0.55 !important;
-        transition: transform 0.2s ease, opacity 0.2s ease !important;
+        filter: grayscale(1) brightness(1.2) !important;
+        transition: all 0.2s ease !important;
     }
     
-    /* Hover state text color glow */
+    /* Hover karne par bright active state */
     div[data-testid="stHorizontalBlock"] button:hover {
         opacity: 1 !important;
-        transform: scale(1.2);
+        filter: grayscale(0) brightness(1) !important;
+        transform: scale(1.15);
         background-color: transparent !important;
     }
     
     div[data-testid="stHorizontalBlock"] button p {
-        font-size: 19px !important; /* Perfect clear outline size */
-        color: #8a8d9f !important;
-        font-weight: normal !important;
-    }
-    
-    div[data-testid="stHorizontalBlock"] button:hover p {
-        color: #00f2fe !important; /* Glow on target hover */
+        font-size: 15px !important;
     }
     
     /* Fix padding gaps */
@@ -192,7 +188,7 @@ if uploaded_file is not None:
             st.sidebar.error(f"Error reading file: {e}")
 
 # ==========================================
-# MAIN CHAT LOGIC WITH FIXED HORIZONTAL HOLLOW ICONS
+# MAIN CHAT LOGIC WITH DIMMED GEMINI TOOLBAR
 # ==========================================
 
 # Purani chats ko screen par dikhana
@@ -213,17 +209,17 @@ for idx, message in enumerate(st.session_state.messages):
             </div>
         ''')
         
-        # Flex layout row format - Mobile & Laptop unified horizontal lock
+        # Flex layout automatic columns - Mobile & PC row format
         btn_cols = st.columns([1, 1, 1, 1, 12])
         
         with btn_cols[0]:
-            if st.button("🖒", key=f"good_{idx}", help="Good response"):
+            if st.button("👍", key=f"good_{idx}", help="Good response"):
                 st.toast("Thanks for feedback! 👍")
         with btn_cols[1]:
-            if st.button("🖓", key=f"bad_{idx}", help="Bad response"):
+            if st.button("👎", key=f"bad_{idx}", help="Bad response"):
                 st.toast("Feedback recorded to improve NEX. 👎")
         with btn_cols[2]:
-            if st.button("↻", key=f"redo_{idx}", help="Regenerate response"):
+            if st.button("🔄", key=f"redo_{idx}", help="Regenerate response"):
                 for prev in reversed(st.session_state.messages[:idx]):
                     if prev["role"] == "user":
                         st.session_state.regenerate_trigger = prev["content"]
@@ -235,12 +231,14 @@ for idx, message in enumerate(st.session_state.messages):
 user_input = st.chat_input("Ask me anything...")
 
 # Redo chain activation override
-final_prompt = user_input if user_input else st.session_state.regenerate_trigger
+final_prompt = None
+if user_input:
+    final_prompt = user_input
+elif st.session_state.regenerate_trigger:
+    final_prompt = st.session_state.regenerate_trigger
+    st.session_state.regenerate_trigger = None
 
 if final_prompt:
-    if st.session_state.regenerate_trigger:
-        st.session_state.regenerate_trigger = None
-        
     if file_context:
         full_prompt = f"Context from file:\n{file_context}\n\nUser Question: {final_prompt}"
     else:
