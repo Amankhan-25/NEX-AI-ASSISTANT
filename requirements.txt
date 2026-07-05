@@ -2,4 +2,3 @@ streamlit
 groq
 streamlit-mic-recorder
 pypdf
-lucide-icon-stat
