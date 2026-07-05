@@ -1,6 +1,5 @@
 import streamlit as st
 from groq import Groq
-from streamlit_mic_recorder import speech_to_text
 import pypdf
 
 # Page layout aur title setup (Sabse upar hona chahiye)
@@ -156,18 +155,11 @@ for message in st.session_state.messages:
             </div>
         ''')
 
-# --- VOICE INPUT CONTAINER ---
-st.markdown("### 🎙️ Speak to NEX AI")
-voice_text = speech_to_text(start_prompt="🔴 Tap to Speak", stop_prompt="⏹️ Stop Recording", language='en', key='groq_mic')
-
-# Text Chat Input
-user_input = st.chat_input("Ask me anything...")
-
-# Final prompt decision
-final_prompt = user_input if user_input else voice_text
+# Text Chat Input Only (Voice components removed)
+final_prompt = st.chat_input("Ask me anything...")
 
 if final_prompt:
-    if file_context and user_input:
+    if file_context:
         full_prompt = f"Context from file:\n{file_context}\n\nUser Question: {final_prompt}"
     else:
         full_prompt = final_prompt
@@ -194,7 +186,7 @@ if final_prompt:
         completion = client.chat.completions.create(
             model="llama-3.1-8b-instant", 
             messages=current_messages,
-            stream=False,  # Custom layout bubble handling ke liye pure chunk ko container me block kiya
+            stream=False,
         )
         
         full_response = completion.choices[0].message.content
