@@ -6,7 +6,7 @@ import pypdf
 st.set_page_config(page_title="NEX AI Assistant", page_icon="🤖", layout="centered")
 
 # ==========================================
-# ADVANCED TECHY THEME WITH DIM ICONS FIX
+# ADVANCED TECHY THEME WITH TRANSPARENT ICONS
 # ==========================================
 st.html(r"""
     <style>
@@ -95,7 +95,7 @@ st.html(r"""
         min-width: unset !important;
     }
     
-    /* FIXED DIM & LIGHT OVERRIDE FOR ICONS */
+    /* SLEEK TRANSPARENT OVERRIDE FOR GEMINI ICONS */
     div[data-testid="stHorizontalBlock"] button {
         background-color: transparent !important;
         border: none !important;
@@ -105,16 +105,16 @@ st.html(r"""
         height: auto !important;
         box-shadow: none !important;
         
-        /* Icons ko light, dim aur subtle greyish tone dene ke liye */
-        opacity: 0.55 !important;
-        filter: grayscale(1) brightness(1.2) !important;
-        transition: all 0.2s ease !important;
+        /* Icons ko clear transparent look dene ke liye mix styling */
+        opacity: 0.35 !important;
+        filter: grayscale(1) contrast(0.8) !important;
+        transition: all 0.25s ease !important;
     }
     
-    /* Hover karne par bright active state */
+    /* Active State Glow on Hover/Tap */
     div[data-testid="stHorizontalBlock"] button:hover {
-        opacity: 1 !important;
-        filter: grayscale(0) brightness(1) !important;
+        opacity: 0.95 !important;
+        filter: grayscale(0) contrast(1) !important;
         transform: scale(1.15);
         background-color: transparent !important;
     }
@@ -188,7 +188,7 @@ if uploaded_file is not None:
             st.sidebar.error(f"Error reading file: {e}")
 
 # ==========================================
-# MAIN CHAT LOGIC WITH DIMMED GEMINI TOOLBAR
+# MAIN CHAT LOGIC WITH TRANSPARENT TOOLBAR
 # ==========================================
 
 # Purani chats ko screen par dikhana
