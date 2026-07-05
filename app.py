@@ -6,6 +6,70 @@ import pypdf
 # Page layout aur title setup
 st.set_page_config(page_title="NEX AI Assistant", page_icon="🤖", layout="centered")
 
+# ==========================================
+# ADVANCED TECHY & GEMINI-INSPIRED THEME (CSS)
+# ==========================================
+st.markdown("""
+    <style>
+    /* Main Background & Techy Gradient Vibe */
+    .stApp {
+        background: linear-gradient(135deg, #0b0d19 0%, #111424 50%, #0d0f1d 100%);
+        color: #e2e8f0;
+        font-family: 'Inter', sans-serif;
+    }
+    
+    /* Top Header/Title Styling */
+    h1 {
+        color: #ffffff !important;
+        font-weight: 800 !important;
+        background: linear-gradient(45deg, #4facfe 0%, #00f2fe 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        letter-spacing: -0.5px;
+    }
+    
+    /* Sidebar / Glassmorphism effect */
+    section[data-testid="stSidebar"] {
+        background-color: rgba(17, 20, 36, 0.7) !important;
+        backdrop-filter: blur(10px);
+        border-right: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    
+    /* Chat Input Bar - Gemini Floating Box Style */
+    div[data-testid="stChatInput"] {
+        background-color: #1e2238 !important;
+        border: 1px solid rgba(79, 172, 254, 0.3) !important;
+        border-radius: 16px !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), 0 0 15px rgba(79, 172, 254, 0.1);
+        padding: 4px !important;
+    }
+    
+    div[data-testid="stChatInput"] textarea {
+        color: #ffffff !important;
+    }
+    
+    /* Chat Message Bubbles Customized */
+    div[data-testid="stChatMessage"] {
+        background-color: rgba(30, 34, 56, 0.4) !important;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.03);
+        margin-bottom: 10px;
+        padding: 15px !important;
+    }
+    
+    /* User Message distinct style */
+    div[data-testid="stChatMessageUser"] {
+        background-color: rgba(79, 172, 254, 0.1) !important;
+        border: 1px solid rgba(79, 172, 254, 0.2) !important;
+    }
+    
+    /* Custom divider */
+    hr {
+        border-color: rgba(255, 255, 255, 0.05) !important;
+    }
+    </style>
+""", unsafe_allowed_html=True)
+
 st.title("🤖 NEX AI Assistant")
 st.caption("Made by Mr.Amankhan | Available 24/7 Live")
 
@@ -127,4 +191,3 @@ if final_prompt:
             st.error(f"Error: {e}")
             
     st.session_state.messages.append({"role": "assistant", "content": full_response})
-    
