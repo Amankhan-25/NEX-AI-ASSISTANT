@@ -9,7 +9,6 @@ st.set_page_config(page_title="NEX AI Assistant", page_icon="🤖", layout="cent
 # ==========================================
 # SAFE DYNAMIC TECHY & GEMINI-INSPIRED THEME
 # ==========================================
-# Python 3.14 crash se bachne ke liye safe rendering format
 st.html(r"""
     <style>
     /* Main Background Tech Gradient */
@@ -40,11 +39,43 @@ st.html(r"""
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
     }
     
-    /* Message Bubbles Tech Style */
-    div[data-testid="stChatMessage"] {
-        background-color: rgba(30, 34, 56, 0.4) !important;
-        border-radius: 12px;
-        border: 1px solid rgba(255, 255, 255, 0.03);
+    /* TECHIE CHAT BUBBLES CUSTOM STYLING */
+    .chat-row {
+        display: flex;
+        margin-bottom: 15px;
+        width: 100%;
+    }
+    .row-user {
+        justify-content: flex-end;
+    }
+    .row-bot {
+        justify-content: flex-start;
+    }
+    .bubble {
+        padding: 12px 16px;
+        border-radius: 14px;
+        max-width: 75%;
+        font-size: 15px;
+        line-height: 1.5;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+    .bubble-user {
+        background-color: rgba(79, 172, 254, 0.15);
+        border: 1px solid rgba(79, 172, 254, 0.4);
+        color: #ffffff;
+        border-top-right-radius: 2px;
+    }
+    .bubble-bot {
+        background-color: rgba(30, 34, 56, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        color: #e2e8f0;
+        border-top-left-radius: 2px;
+    }
+    .avatar {
+        font-size: 18px;
+        margin: 0 10px;
+        display: flex;
+        align-items: center;
     }
     </style>
 """)
@@ -74,7 +105,6 @@ if "messages" not in st.session_state:
 # ==========================================
 st.sidebar.title("⚙️ NEX AI Options")
 
-# Clear Chat Button
 if st.sidebar.button("🧹 Clear Chat History", type="primary"):
     st.session_state.messages = []
     st.rerun()
@@ -106,13 +136,25 @@ if uploaded_file is not None:
             st.sidebar.error(f"Error reading file: {e}")
 
 # ==========================================
-# MAIN CHAT LOGIC WITH VOICE INPUT
+# MAIN CHAT LOGIC WITH CUSTOM BUBBLES
 # ==========================================
 
-# Purani chats ko screen par dikhana
+# Purani chats ko custom aligned HTML formats me screen par dikhana
 for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+    if message["role"] == "user":
+        st.html(f'''
+            <div class="chat-row row-user">
+                <div class="bubble bubble-user">{message["content"]}</div>
+                <div class="avatar">👤</div>
+            </div>
+        ''')
+    else:
+        st.html(f'''
+            <div class="chat-row row-bot">
+                <div class="avatar">🤖</div>
+                <div class="bubble bubble-bot">{message["content"]}</div>
+            </div>
+        ''')
 
 # --- VOICE INPUT CONTAINER ---
 st.markdown("### 🎙️ Speak to NEX AI")
@@ -131,37 +173,42 @@ if final_prompt:
         full_prompt = final_prompt
         
     st.session_state.messages.append({"role": "user", "content": final_prompt})
-    with st.chat_message("user"):
-        st.markdown(final_prompt)
+    
+    # User message right-align render karna
+    st.html(f'''
+        <div class="chat-row row-user">
+            <div class="bubble bubble-user">{final_prompt}</div>
+            <div class="avatar">👤</div>
+        </div>
+    ''')
 
     # AI ka response generate karna
-    with st.chat_message("assistant"):
-        message_placeholder = st.empty()
-        full_response = ""
-        
-        try:
-            current_messages = [
-                {"role": m["role"], "content": m["content"]}
-                for m in st.session_state.messages
-            ]
-            if file_context:
-                current_messages[-1]["content"] = full_prompt
+    try:
+        current_messages = [
+            {"role": m["role"], "content": m["content"]}
+            for m in st.session_state.messages
+        ]
+        if file_context:
+            current_messages[-1]["content"] = full_prompt
 
-            completion = client.chat.completions.create(
-                model="llama-3.1-8b-instant", 
-                messages=current_messages,
-                stream=True,
-            )
-            
-            for chunk in completion:
-                if chunk.choices[0].delta.content:
-                    full_response += chunk.choices[0].delta.content
-                    message_placeholder.markdown(full_response + "▌")
-            
-            message_placeholder.markdown(full_response)
-        except Exception as e:
-            st.error(f"Error: {e}")
-            
-    st.session_state.messages.append({"role": "assistant", "content": full_response})
+        completion = client.chat.completions.create(
+            model="llama-3.1-8b-instant", 
+            messages=current_messages,
+            stream=False,  # Custom layout bubble handling ke liye pure chunk ko container me block kiya
+        )
+        
+        full_response = completion.choices[0].message.content
+        
+        # Assistant message left-align render karna
+        st.html(f'''
+            <div class="chat-row row-bot">
+                <div class="avatar">🤖</div>
+                <div class="bubble bubble-bot">{full_response}</div>
+            </div>
+        ''')
+        
+        st.session_state.messages.append({"role": "assistant", "content": full_response})
+    except Exception as e:
+        st.error(f"Error: {e}")
+        
     st.rerun()
-    
