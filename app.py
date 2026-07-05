@@ -41,7 +41,7 @@ st.html(r"""
     /* TECHIE CHAT BUBBLES CUSTOM STYLING */
     .chat-row {
         display: flex;
-        margin-bottom: 15px;
+        margin-bottom: 5px;
         width: 100%;
     }
     .row-user {
@@ -76,6 +76,12 @@ st.html(r"""
         display: flex;
         align-items: center;
     }
+    
+    /* Gemini Action Toolbar Spacing */
+    .action-bar {
+        margin-left: 45px;
+        margin-bottom: 20px;
+    }
     </style>
 """)
 
@@ -98,6 +104,8 @@ client = Groq(api_key=api_key)
 # Chat history initialize karna
 if "messages" not in st.session_state:
     st.session_state.messages = []
+if "regenerate_trigger" not in st.session_state:
+    st.session_state.regenerate_trigger = None
 
 # ==========================================
 # SIDEBAR FEATURES
@@ -135,11 +143,11 @@ if uploaded_file is not None:
             st.sidebar.error(f"Error reading file: {e}")
 
 # ==========================================
-# MAIN CHAT LOGIC WITH CUSTOM BUBBLES
+# MAIN CHAT LOGIC WITH GEMINI TOOLBAR
 # ==========================================
 
-# Purani chats ko custom aligned HTML formats me screen par dikhana
-for message in st.session_state.messages:
+# Purani chats ko custom aligned HTML formats me dikhana
+for idx, message in enumerate(st.session_state.messages):
     if message["role"] == "user":
         st.html(f'''
             <div class="chat-row row-user">
@@ -148,15 +156,48 @@ for message in st.session_state.messages:
             </div>
         ''')
     else:
+        # Assistant Response Bubble
         st.html(f'''
             <div class="chat-row row-bot">
                 <div class="avatar">🤖</div>
                 <div class="bubble bubble-bot">{message["content"]}</div>
             </div>
         ''')
+        
+        # a1.png wala tool row rendering (Har bot reply ke theek neeche)
+        btn_cols = st.columns([0.06, 0.06, 0.06, 0.06, 0.06, 0.7], gap="small")
+        
+        with btn_cols[0]:
+            if st.button("👍", key=f"good_{idx}", help="Good response"):
+                st.toast("Thanks for feedback! 👍")
+        with btn_cols[1]:
+            if st.button("👎", key=f"bad_{idx}", help="Bad response"):
+                st.toast("Feedback recorded to improve NEX. 👎")
+        with btn_cols[2]:
+            if st.button("🔄", key=f"redo_{idx}", help="Regenerate response"):
+                # Pichla user prompt find karne ka logic
+                for prev in reversed(st.session_state.messages[:idx]):
+                    if prev["role"] == "user":
+                        st.session_state.regenerate_trigger = prev["content"]
+                        st.rerun()
+        with btn_cols[3]:
+            # Share/Export button layout mockup text format
+            st.download_button("📤", data=message["content"], file_name="nex_response.txt", key=f"share_{idx}", help="Export response")
+        with btn_cols[4]:
+            # Text copy to clipboard fallback element hack
+            if st.button("📋", key=f"copy_{idx}", help="Copy to clipboard"):
+                st.toast("Text ready to copy from screen! 📋")
 
-# Text Chat Input Only (Voice components removed)
-final_prompt = st.chat_input("Ask me anything...")
+# Input Processing Elements
+user_input = st.chat_input("Ask me anything...")
+
+# Redo chain activation override
+final_prompt = None
+if user_input:
+    final_prompt = user_input
+elif st.session_state.regenerate_trigger:
+    final_prompt = st.session_state.regenerate_trigger
+    st.session_state.regenerate_trigger = None  # Reset state after trigger
 
 if final_prompt:
     if file_context:
@@ -165,23 +206,19 @@ if final_prompt:
         full_prompt = final_prompt
         
     st.session_state.messages.append({"role": "user", "content": final_prompt})
-    
-    # User message right-align render karna
-    st.html(f'''
-        <div class="chat-row row-user">
-            <div class="bubble bubble-user">{final_prompt}</div>
-            <div class="avatar">👤</div>
-        </div>
-    ''')
+    st.rerun()
 
-    # AI ka response generate karna
+# AI Response Generation Setup
+if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
+    latest_user_msg = st.session_state.messages[-1]["content"]
+    
     try:
         current_messages = [
             {"role": m["role"], "content": m["content"]}
             for m in st.session_state.messages
         ]
         if file_context:
-            current_messages[-1]["content"] = full_prompt
+            current_messages[-1]["content"] = f"Context from file:\n{file_context}\n\nUser Question: {latest_user_msg}"
 
         completion = client.chat.completions.create(
             model="llama-3.1-8b-instant", 
@@ -190,17 +227,7 @@ if final_prompt:
         )
         
         full_response = completion.choices[0].message.content
-        
-        # Assistant message left-align render karna
-        st.html(f'''
-            <div class="chat-row row-bot">
-                <div class="avatar">🤖</div>
-                <div class="bubble bubble-bot">{full_response}</div>
-            </div>
-        ''')
-        
         st.session_state.messages.append({"role": "assistant", "content": full_response})
+        st.rerun()
     except Exception as e:
         st.error(f"Error: {e}")
-        
-    st.rerun()
