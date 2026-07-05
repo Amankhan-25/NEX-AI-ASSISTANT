@@ -1,7 +1,6 @@
 import streamlit as st
 from groq import Groq
 import pypdf
-import base64
 
 # Page layout aur title setup (Sabse upar hona chahiye)
 st.set_page_config(page_title="NEX AI Assistant", page_icon="🤖", layout="centered")
@@ -103,17 +102,6 @@ st.html(r"""
         margin-top: 0px !important;
     }
     </style>
-    
-    <script>
-    function nexCopyToClipboard(base64Text) {
-        const text = atob(base64Text);
-        navigator.clipboard.writeText(text).then(function() {
-            console.log('Copied successfully');
-        }).catch(function(err) {
-            console.error('Failed to copy text: ', err);
-        });
-    }
-    </script>
 """)
 
 st.title("🤖 NEX AI Assistant")
@@ -137,6 +125,26 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 if "regenerate_trigger" not in st.session_state:
     st.session_state.regenerate_trigger = None
+# Clipboard tracking utility state
+if "text_to_copy" not in st.session_state:
+    st.session_state.text_to_copy = None
+
+# ==========================================
+# CLIPBOARD COPY ENGINE TRIGGER
+# ==========================================
+# Jab user 📋 button par click karega, tab yeh block trigger hoga aur browser level par clean copy inject kar dega
+if st.session_state.text_to_copy:
+    text_clean = st.session_state.text_to_copy.replace("`", "\\`").replace("$", "\\$")
+    st.html(f"""
+        <script>
+            navigator.clipboard.writeText(`{text_clean}`).then(() => {{
+                console.log("Copied to clipboard successfully!");
+            }}).catch((err) => {{
+                console.error("Failed to copy text: ", err);
+            }});
+        </script>
+    """)
+    st.session_state.text_to_copy = None  # Reset execution queue state
 
 # ==========================================
 # SIDEBAR FEATURES
@@ -174,7 +182,7 @@ if uploaded_file is not None:
             st.sidebar.error(f"Error reading file: {e}")
 
 # ==========================================
-# MAIN CHAT LOGIC WITH FIXED GEMINI TOOLBAR
+# MAIN CHAT LOGIC WITH INLINE GEMINI TOOLBAR
 # ==========================================
 
 # Purani chats ko screen par dikhana
@@ -195,10 +203,9 @@ for idx, message in enumerate(st.session_state.messages):
             </div>
         ''')
         
-        # a3.png fix: st.markdown ke incomplete div structures ko remove karke direct indentation column padding di hai
+        # Action alignment toolbar columns
         btn_cols = st.columns([0.06, 0.05, 0.05, 0.05, 0.05, 0.05, 0.69], gap="small")
         
-        # Phele column ko spacer banaya taaki robot icon ke theek niche se aligned shuru ho
         with btn_cols[1]:
             if st.button("👍", key=f"good_{idx}", help="Good response"):
                 st.toast("Thanks for feedback! 👍")
@@ -214,10 +221,11 @@ for idx, message in enumerate(st.session_state.messages):
         with btn_cols[4]:
             st.download_button("📤", data=message["content"], file_name="nex_response.txt", key=f"share_{idx}", help="Export response")
         with btn_cols[5]:
-            encoded_txt = base64.b64encode(message["content"].encode('utf-8')).decode('utf-8')
+            # Native UI click handler that updates engine context instantly
             if st.button("📋", key=f"copy_{idx}", help="Copy to clipboard"):
-                st.html(f"<script>nexCopyToClipboard('{encoded_txt}');</script>")
+                st.session_state.text_to_copy = message["content"]
                 st.toast("Copied to clipboard! 📋")
+                st.rerun()
 
 # Input Processing Elements
 user_input = st.chat_input("Ask me anything...")
