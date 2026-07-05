@@ -125,26 +125,6 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 if "regenerate_trigger" not in st.session_state:
     st.session_state.regenerate_trigger = None
-# Clipboard tracking utility state
-if "text_to_copy" not in st.session_state:
-    st.session_state.text_to_copy = None
-
-# ==========================================
-# CLIPBOARD COPY ENGINE TRIGGER
-# ==========================================
-# Jab user 📋 button par click karega, tab yeh block trigger hoga aur browser level par clean copy inject kar dega
-if st.session_state.text_to_copy:
-    text_clean = st.session_state.text_to_copy.replace("`", "\\`").replace("$", "\\$")
-    st.html(f"""
-        <script>
-            navigator.clipboard.writeText(`{text_clean}`).then(() => {{
-                console.log("Copied to clipboard successfully!");
-            }}).catch((err) => {{
-                console.error("Failed to copy text: ", err);
-            }});
-        </script>
-    """)
-    st.session_state.text_to_copy = None  # Reset execution queue state
 
 # ==========================================
 # SIDEBAR FEATURES
@@ -203,8 +183,8 @@ for idx, message in enumerate(st.session_state.messages):
             </div>
         ''')
         
-        # Action alignment toolbar columns
-        btn_cols = st.columns([0.06, 0.05, 0.05, 0.05, 0.05, 0.05, 0.69], gap="small")
+        # Action alignment toolbar columns (Removed Copy Column, Ajusted width layout)
+        btn_cols = st.columns([0.06, 0.05, 0.05, 0.05, 0.05, 0.74], gap="small")
         
         with btn_cols[1]:
             if st.button("👍", key=f"good_{idx}", help="Good response"):
@@ -220,12 +200,6 @@ for idx, message in enumerate(st.session_state.messages):
                         st.rerun()
         with btn_cols[4]:
             st.download_button("📤", data=message["content"], file_name="nex_response.txt", key=f"share_{idx}", help="Export response")
-        with btn_cols[5]:
-            # Native UI click handler that updates engine context instantly
-            if st.button("📋", key=f"copy_{idx}", help="Copy to clipboard"):
-                st.session_state.text_to_copy = message["content"]
-                st.toast("Copied to clipboard! 📋")
-                st.rerun()
 
 # Input Processing Elements
 user_input = st.chat_input("Ask me anything...")
