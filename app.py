@@ -6,7 +6,7 @@ import pypdf
 st.set_page_config(page_title="NEX AI Assistant", page_icon="🤖", layout="centered")
 
 # ==========================================
-# ADVANCED TECHY THEME WITH MOBILE HORIZONTAL BUTTONS FIX
+# ADVANCED TECHY THEME WITH DIM ICONS FIX
 # ==========================================
 st.html(r"""
     <style>
@@ -77,8 +77,7 @@ st.html(r"""
         align-items: center;
     }
     
-    /* CRITICAL MOBILE HORIZONTAL FIX (a.jpg Fix) */
-    /* Mobile standard responsive layout ko override karke single inline layout force karna */
+    /* MOBILE & PC HORIZONTAL ROW STYLING */
     div[data-testid="stHorizontalBlock"] {
         display: flex !important;
         flex-direction: row !important;
@@ -91,13 +90,12 @@ st.html(r"""
         margin-bottom: 12px !important;
     }
     
-    /* Individual column elements display fix inside flex row */
     div[data-testid="stHorizontalBlock"] > div {
         width: auto !important;
         min-width: unset !important;
     }
     
-    /* Buttons transparent alignment override to remove boxes */
+    /* FIXED DIM & LIGHT OVERRIDE FOR ICONS */
     div[data-testid="stHorizontalBlock"] button {
         background-color: transparent !important;
         border: none !important;
@@ -106,15 +104,23 @@ st.html(r"""
         width: auto !important;
         height: auto !important;
         box-shadow: none !important;
-        font-size: 16px !important;
-        transition: transform 0.2s ease;
+        
+        /* Icons ko light, dim aur subtle greyish tone dene ke liye */
+        opacity: 0.55 !important;
+        filter: grayscale(1) brightness(1.2) !important;
+        transition: all 0.2s ease !important;
     }
+    
+    /* Hover karne par bright active state */
     div[data-testid="stHorizontalBlock"] button:hover {
-        transform: scale(1.2);
+        opacity: 1 !important;
+        filter: grayscale(0) brightness(1) !important;
+        transform: scale(1.15);
         background-color: transparent !important;
     }
+    
     div[data-testid="stHorizontalBlock"] button p {
-        font-size: 16px !important;
+        font-size: 15px !important;
     }
     
     /* Fix padding gaps */
@@ -182,7 +188,7 @@ if uploaded_file is not None:
             st.sidebar.error(f"Error reading file: {e}")
 
 # ==========================================
-# MAIN CHAT LOGIC WITH FIXED GEMINI TOOLBAR
+# MAIN CHAT LOGIC WITH DIMMED GEMINI TOOLBAR
 # ==========================================
 
 # Purani chats ko screen par dikhana
@@ -203,7 +209,7 @@ for idx, message in enumerate(st.session_state.messages):
             </div>
         ''')
         
-        # Flex layout automatic columns - Mobile structure optimized
+        # Flex layout automatic columns - Mobile & PC row format
         btn_cols = st.columns([1, 1, 1, 1, 12])
         
         with btn_cols[0]:
