@@ -156,6 +156,10 @@ for message in st.session_state.messages:
             </div>
         ''')
 
+# --- VOICE INPUT CONTAINER ---
+st.markdown("### 🎙️ Speak to NEX AI")
+voice_text = speech_to_text(start_prompt="🔴 Tap to Speak", stop_prompt="⏹️ Stop Recording", language='en', key='groq_mic')
+
 # Text Chat Input
 user_input = st.chat_input("Ask me anything...")
 
