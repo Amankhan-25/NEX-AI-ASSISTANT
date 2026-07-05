@@ -6,7 +6,7 @@ import pypdf
 st.set_page_config(page_title="NEX AI Assistant", page_icon="🤖", layout="centered")
 
 # ==========================================
-# ADVANCED TECHY THEME WITH TRANSPARENT ICONS
+# ADVANCED TECHY THEME WITH PURE HOLLOW OUTLINE ICONS
 # ==========================================
 st.html(r"""
     <style>
@@ -84,10 +84,10 @@ st.html(r"""
         flex-wrap: nowrap !important;
         align-items: center !important;
         justify-content: flex-start !important;
-        gap: 8px !important;
-        margin-left: 42px !important;
-        margin-top: -2px !important;
-        margin-bottom: 12px !important;
+        gap: 12px !important;
+        margin-left: 45px !important;
+        margin-top: 2px !important;
+        margin-bottom: 15px !important;
     }
     
     div[data-testid="stHorizontalBlock"] > div {
@@ -95,7 +95,7 @@ st.html(r"""
         min-width: unset !important;
     }
     
-    /* SLEEK TRANSPARENT OVERRIDE FOR GEMINI ICONS */
+    /* PURE HOLLOW OUTLINE STRUCTURAL BUTTONS */
     div[data-testid="stHorizontalBlock"] button {
         background-color: transparent !important;
         border: none !important;
@@ -104,23 +104,27 @@ st.html(r"""
         width: auto !important;
         height: auto !important;
         box-shadow: none !important;
-        
-        /* Icons ko clear transparent look dene ke liye mix styling */
-        opacity: 0.35 !important;
-        filter: grayscale(1) contrast(0.8) !important;
-        transition: all 0.25s ease !important;
+        transition: transform 0.2s ease !important;
     }
     
-    /* Active State Glow on Hover/Tap */
-    div[data-testid="stHorizontalBlock"] button:hover {
-        opacity: 0.95 !important;
-        filter: grayscale(0) contrast(1) !important;
-        transform: scale(1.15);
-        background-color: transparent !important;
+    /* SVG stroke shapes handle inside native button frame */
+    div[data-testid="stHorizontalBlock"] button svg {
+        stroke: #8a8d9f !important; /* Border color */
+        fill: transparent !important; /* Middle completely invisible */
+        stroke-width: 2px !important;
+        width: 18px !important;
+        height: 18px !important;
+        transition: stroke 0.2s ease !important;
+    }
+    
+    /* Hover/Tap style glow active trigger */
+    div[data-testid="stHorizontalBlock"] button:hover svg {
+        stroke: #00f2fe !important;
+        transform: scale(1.1);
     }
     
     div[data-testid="stHorizontalBlock"] button p {
-        font-size: 15px !important;
+        display: none !important; /* Hide native text if any fallback triggers */
     }
     
     /* Fix padding gaps */
@@ -188,7 +192,7 @@ if uploaded_file is not None:
             st.sidebar.error(f"Error reading file: {e}")
 
 # ==========================================
-# MAIN CHAT LOGIC WITH TRANSPARENT TOOLBAR
+# MAIN CHAT LOGIC WITH HOLLOW OUTLINE ICONS
 # ==========================================
 
 # Purani chats ko screen par dikhana
@@ -209,36 +213,45 @@ for idx, message in enumerate(st.session_state.messages):
             </div>
         ''')
         
-        # Flex layout automatic columns - Mobile & PC row format
+        # Flex toolbar row with pure hollow outline SVG vectors
         btn_cols = st.columns([1, 1, 1, 1, 12])
         
         with btn_cols[0]:
-            if st.button("👍", key=f"good_{idx}", help="Good response"):
+            # Thumbs Up Outline vector
+            if st.button("", key=f"good_{idx}", help="Good response"):
                 st.toast("Thanks for feedback! 👍")
+            st.html(f"<script>document.getElementById('good_{idx}').innerHTML = '<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3\"></svg>';</script>")
+            
         with btn_cols[1]:
-            if st.button("👎", key=f"bad_{idx}", help="Bad response"):
+            # Thumbs Down Outline vector
+            if st.button("", key=f"bad_{idx}", help="Bad response"):
                 st.toast("Feedback recorded to improve NEX. 👎")
+            st.html(f"<script>document.getElementById('bad_{idx}').innerHTML = '<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm12-13h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3\"></svg>';</script>")
+            
         with btn_cols[2]:
-            if st.button("🔄", key=f"redo_{idx}", help="Regenerate response"):
+            # Redo Refresh Outline vector
+            if st.button("", key=f"redo_{idx}", help="Regenerate response"):
                 for prev in reversed(st.session_state.messages[:idx]):
                     if prev["role"] == "user":
                         st.session_state.regenerate_trigger = prev["content"]
                         st.rerun()
+            st.html(f"<script>document.getElementById('redo_{idx}').innerHTML = '<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67\"></svg>';</script>")
+            
         with btn_cols[3]:
-            st.download_button("📤", data=message["content"], file_name="nex_response.txt", key=f"share_{idx}", help="Export response")
+            # Export Share Outline vector
+            st.download_button("", data=message["content"], file_name="nex_response.txt", key=f"share_{idx}", help="Export response")
+            st.html(f"<script>document.getElementById('share_{idx}').innerHTML = '<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13\"></svg>';</script>")
 
 # Input Processing Elements
 user_input = st.chat_input("Ask me anything...")
 
 # Redo chain activation override
-final_prompt = None
-if user_input:
-    final_prompt = user_input
-elif st.session_state.regenerate_trigger:
-    final_prompt = st.session_state.regenerate_trigger
-    st.session_state.regenerate_trigger = None
+final_prompt = user_input if user_input else st.session_state.regenerate_trigger
 
 if final_prompt:
+    if st.session_state.regenerate_trigger:
+        st.session_state.regenerate_trigger = None
+        
     if file_context:
         full_prompt = f"Context from file:\n{file_context}\n\nUser Question: {final_prompt}"
     else:
